@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="es" data-tema="oscuro">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="Laboratorio educativo de César, sustitución simple, Vigenère y Afín con procedimiento completo.">
+  <title>Criptografía clásica · Laboratorio educativo</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='estilos.css') }}">
+  <script src="{{ url_for('static', filename='aplicacion.js') }}" defer></script>
+</head>
+<body>
+  <header class="barra-superior">
+    <div class="marca">Criptografía clásica</div>
+    <div class="selector-tema" role="group" aria-label="Tema de la interfaz">
+      <button type="button" data-tema="oscuro" aria-pressed="true">Oscuro</button>
+      <button type="button" data-tema="claro" aria-pressed="false">Claro</button>
+    </div>
+  </header>
+  <div class="shell">
+    <aside class="sidebar">
+      <nav aria-label="Algoritmos">
+        <button type="button" class="nav-item active" data-vista="cesar" aria-current="page"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 7a7 7 0 0 1 11.6-2L20 8M4 16l2.3 3A7 7 0 0 0 18 17"/></svg><span>Cifrado César</span></button>
+        <button type="button" class="nav-item" data-vista="sustitucion"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M3 7h3c5 0 7 10 12 10h3M17 13l4 4-4 4M3 17h3c2 0 3-1 4-3M14 7c1-1 2-2 4-2h3M17 1l4 4-4 4"/></svg><span>Sustitución Simple</span></button>
+        <button type="button" class="nav-item" data-vista="vigenere"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><circle cx="8" cy="8" r="5"/><path d="m12 12 9 9M16 16l3-3M18 18l3-3"/></svg><span>Cifrado Vigenère</span></button>
+        <button type="button" class="nav-item" data-vista="afin"><svg class="nav-icon" viewBox="0 0 24 24" aria-hidden="true" focusable="false"><path d="M4 19 10 5h4l6 14M7 13h10M5 3h14"/></svg><span>Cifrado Afín</span></button>
+        <button type="button" class="nav-item" data-vista="informacion">Información de Algoritmos</button>
+      </nav>
+    </aside>
+
+    <section class="operacion" id="panel-operacion" aria-labelledby="titulo-algoritmo">
+      <h1 id="titulo-algoritmo">Cifrado César</h1>
+      <p class="intro">Cifra, descifra y comprende el proceso.</p>
+      <form id="formulario" novalidate>
+        <div class="campo">
+          <label for="modo">Modo</label>
+          <select id="modo" name="modo"><option value="cifrar">Cifrar</option><option value="descifrar">Descifrar</option><option value="analizar">Fuerza bruta</option></select>
+          <p class="ayuda" id="ayuda-modo" hidden></p>
+        </div>
+        <div class="campo">
+          <div class="label-line"><label for="mensaje">Mensaje</label><span class="contador" id="contador">10 caracteres</span></div>
+          <textarea id="mensaje" name="mensaje" rows="5" spellcheck="false" autocomplete="off" aria-describedby="error-mensaje">HOLA MUNDO</textarea>
+          <p class="error-campo" id="error-mensaje" role="alert" hidden></p>
+        </div>
+        <div class="campo" id="grupo-clave">
+          <label for="clave" id="label-clave">Desplazamiento</label>
+          <input id="clave" name="clave" value="3" inputmode="numeric" autocomplete="off" spellcheck="false" aria-describedby="ayuda-clave error-clave">
+          <p class="ayuda" id="ayuda-clave">Entero positivo, negativo o cero. Se aplica módulo 26.</p>
+          <p class="error-campo" id="error-clave" role="alert" hidden></p>
+        </div>
+        <div class="campo claves-afin" id="grupo-afin" hidden><div><label for="clave-a">Multiplicador a</label><input id="clave-a" value="5" inputmode="numeric" autocomplete="off"><p class="ayuda">a debe ser coprimo con 26.</p></div><div><label for="clave-b">Desplazamiento b</label><input id="clave-b" value="8" inputmode="numeric" autocomplete="off"><p class="ayuda">Entero; se aplica módulo 26.</p></div></div>
+        <button class="principal" id="ejecutar" type="submit" disabled>Cifrar</button>
+      </form>
+      <section class="resumen" aria-labelledby="titulo-resultado">
+        <div class="section-head"><h2 id="titulo-resultado">Resultado</h2><span id="estado" class="estado">Listo</span></div>
+        <p class="metadato" id="metadato">La salida aparecerá después de ejecutar.</p>
+        <div id="selector-candidato" hidden><label for="candidato">Candidato seleccionado</label><select id="candidato"></select></div>
+        <details id="original-resumen" hidden><summary>Mensaje ingresado</summary><pre id="texto-original" class="entrada"></pre></details>
+        <pre id="resultado" class="resultado placeholder" aria-live="polite">Esperando una operación.</pre>
+        <div class="acciones"><button type="button" id="copiar" disabled>Copiar</button><button type="button" id="reutilizar" disabled>Usar como entrada</button></div>
+        <p class="feedback" id="feedback" role="status" aria-live="polite"></p>
+      </section>
+    </section>
+
+    <section class="desarrollo" id="panel-desarrollo" aria-labelledby="titulo-desarrollo">
+      <div class="section-head"><h2 id="titulo-desarrollo">Procedimiento completo</h2><button type="button" class="texto-boton" id="limpiar">Limpiar historial</button></div>
+      <p class="metadato" id="cuenta-historial">César · 0 ejecuciones · Más reciente primero</p>
+      <div id="historial" aria-label="Historial de ejecuciones">
+        <div id="vacio" class="vacio"><span class="vacio-numero">01</span><h3>Tu procedimiento aparecerá aquí</h3><p>Ingresa un mensaje y una clave. Verás cada carácter, sus cálculos y cómo se construye el resultado.</p><div class="mini-alfabeto">A=0 &nbsp; B=1 &nbsp; … &nbsp; Z=25</div><p class="ayuda">Los espacios y signos permitidos se conservan. Solo las letras avanzan la clave de Vigenère.</p></div>
+      </div>
+    </section>
+
+    <section class="informacion" id="panel-informacion" aria-labelledby="titulo-informacion" hidden>
+      <h1 id="titulo-informacion">Información de Algoritmos</h1>
+      <p class="intro">Comprende la transformación, la clave y sus límites.</p>
+      <div class="tabs" role="tablist" aria-label="Teoría de los algoritmos">
+        <button id="tab-cesar" role="tab" aria-selected="true" aria-controls="teoria-cesar" tabindex="0" data-tab="cesar">César</button>
+        <button id="tab-sustitucion" role="tab" aria-selected="false" aria-controls="teoria-sustitucion" tabindex="-1" data-tab="sustitucion">Sustitución Simple</button>
+        <button id="tab-vigenere" role="tab" aria-selected="false" aria-controls="teoria-vigenere" tabindex="-1" data-tab="vigenere">Vigenère</button>
+        <button id="tab-afin" role="tab" aria-selected="false" aria-controls="teoria-afin" tabindex="-1" data-tab="afin">Afín</button>
+      </div>
+      <article class="teoria" id="teoria-cesar" role="tabpanel" aria-labelledby="tab-cesar">
+        <h2>César</h2><p>Es una sustitución monoalfabética: cada letra se desplaza una cantidad fija dentro de A–Z. La clave es un entero; los desplazamientos se reducen módulo 26.</p>
+        <div class="formulas-teoria"><code>C = (P + k) mod 26</code><code>P = (C − k) mod 26</code></div>
+        <h3>Ejemplo</h3><p>HOLA, con clave 3, se convierte en <span class="salida">KROD</span>. H=7 y (7+3) mod 26=10, por lo que H se convierte en K.</p>
+        <h3>Fuerza bruta y vulnerabilidades</h3><p>Hay 26 desplazamientos posibles. La clave 0 deja el mensaje intacto; el análisis prueba las otras 25. Las frecuencias de las letras se conservan bajo otra etiqueta. Una clave pequeña y las regularidades del lenguaje facilitan el ataque.</p>
+      </article>
+      <article class="teoria" id="teoria-sustitucion" role="tabpanel" aria-labelledby="tab-sustitucion" hidden>
+        <h2>Sustitución Simple</h2><p>Utiliza una permutación de las 26 letras. El mapeo es biyectivo: cada letra original tiene una salida distinta y cada letra de salida tiene una entrada única.</p>
+        <div class="formulas-teoria"><code>C = mapa[P]</code><code>P = mapa_inverso[C]</code></div>
+        <h3>Clave y correspondencia inversa</h3><p>La primera letra de la clave sustituye a A, la segunda a B y así sucesivamente. QWERTYUIOPASDFGHJKLZXCVBNM es una permutación válida. El descifrado invierte la tabla.</p>
+        <h3>Análisis de frecuencias</h3><p>Las letras frecuentes y los patrones del idioma orientan la búsqueda del mapeo. El análisis de frecuencias orienta hipótesis; no determina por sí solo una clave. Este concepto se presenta como teoría. Un texto corto puede dar pistas poco fiables.</p>
+      </article>
+      <article class="teoria" id="teoria-vigenere" role="tabpanel" aria-labelledby="tab-vigenere" hidden>
+        <h2>Vigenère</h2><p>Es polialfabético: cada letra usa el desplazamiento de la letra correspondiente de una clave repetida. A=0, B=1 y Z=25. Una misma letra del mensaje puede producir salidas distintas.</p>
+        <div class="formulas-teoria"><code>Cᵢ = (Pᵢ + Kᵢ) mod 26</code><code>Pᵢ = (Cᵢ − Kᵢ) mod 26</code></div>
+        <h3>Alineación de la clave</h3><p>Solo las letras A–Z consumen clave. Con mensaje H O!L A y clave SOL, las letras usan S, O, L y S. Los espacios y el signo ! no avanzan la clave.</p>
+        <h3>Método Kasiski</h3><p>Fragmentos repetidos del texto cifrado pueden estar separados por múltiplos de la longitud de la clave. Se estudian sus distancias y divisores. El método puede orientar la longitud de la clave; las propuestas son indicios, no claves confirmadas. Se presenta como teoría.</p>
+      </article>
+      <article class="teoria" id="teoria-afin" role="tabpanel" aria-labelledby="tab-afin" hidden><h2>Afín</h2><p>Es una sustitución monoalfabética definida por dos enteros, a y b. El multiplicador a debe ser coprimo con 26 para que exista su inverso modular.</p><div class="formulas-teoria"><code>C = (a × P + b) mod 26</code><code>P = a⁻¹ × (C − b) mod 26</code></div><h3>Inverso y claves</h3><p>Los multiplicadores válidos son 1, 3, 5, 7, 9, 11, 15, 17, 19, 21, 23 y 25. El inverso satisface (a × a⁻¹) mod 26 = 1.</p><h3>Fuerza bruta</h3><p>12 × 26 = 312 claves válidas. Se prueban todas, incluida a=1, b=0. La búsqueda genera candidatos; no confirma el mensaje original.</p></article>
+      <section class="reglas teoria"><h3>Reglas del laboratorio</h3><p>El alfabeto inglés es A–Z. Se mantienen mayúsculas y minúsculas. La configuración permite dígitos 0–9, espacio normal, tabulación, saltos de línea, signos ASCII y ¿¡. Cualquier carácter ajeno se rechaza: ñ, acentos, letras extranjeras, emojis, comillas tipográficas y espacios especiales.</p><p>Máximo: 5.000 caracteres para cifrado y descifrado, 2.000 para fuerza bruta y 100 letras para la clave Vigenère. El texto nunca se recorta. El historial vive solo en esta página.</p>
+        <h3>Comparación</h3><div class="table-scroll"><table><thead><tr><th>Método</th><th>Tipo de clave</th><th>Transformación</th><th>Limitación</th></tr></thead><tbody><tr><td>César</td><td>Entero</td><td>Desplazamiento fijo</td><td>25 pruebas no triviales</td></tr><tr><td>Sustitución</td><td>Permutación A–Z</td><td>Mapa fijo</td><td>Frecuencias y patrones</td></tr><tr><td>Vigenère</td><td>Letras repetidas</td><td>Desplazamiento variable</td><td>Periodicidad de la clave</td></tr><tr><td>Afín</td><td>Dos enteros</td><td>Multiplicación y desplazamiento</td><td>312 claves y patrones</td></tr></tbody></table></div>
+        <p class="fuentes">Lecturas: <a href="https://pages.mtu.edu/~shene/NSF-4/Tutorial/VIG/Vig-Kasiski.html" target="_blank" rel="noopener noreferrer">Método Kasiski · Michigan Tech</a> · <a href="https://flask.palletsprojects.com/en/stable/" target="_blank" rel="noopener noreferrer">Documentación de Flask</a></p>
+      </section>
+    </section>
+  </div>
+  <div id="notificaciones" aria-label="Notificaciones"></div>
+  <footer><strong>Uso estrictamente educativo.</strong> No protege contraseñas, datos personales, información institucional ni comunicaciones sensibles.</footer>
+</body>
+</html>

@@ -1,0 +1,11 @@
+{
+  "name": "laboratorio-criptografia-clasica",
+  "private": true,
+  "scripts": {
+    "test:interfaz": "node tests/test_interfaz.cjs",
+    "test": "node tests/test_interfaz.cjs"
+  },
+  "devDependencies": {
+    "playwright": "1.62.1"
+  }
+}

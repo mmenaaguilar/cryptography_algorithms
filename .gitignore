@@ -1,0 +1,8 @@
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+
+MANIFIESTO_SHA256.txt
+
+node_modules/
